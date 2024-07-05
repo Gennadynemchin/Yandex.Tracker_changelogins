@@ -6,11 +6,11 @@ from dotenv import load_dotenv
 load_dotenv()
 
 token = os.getenv("TOKEN")
-orgid = os.getenv("ORGID")
+org_id = os.getenv("ORGID")
 
 
-def get_users(token, orgid):
-    headers = {"X-Cloud-Org-Id": f"{orgid}", "Authorization": f"OAuth {token}"}
+def get_users(token, org_id):
+    headers = {"X-Cloud-Org-Id": f"{org_id}", "Authorization": f"OAuth {token}"}
     print(headers)
     response = requests.get("https://api.tracker.yandex.net/v2/users", headers=headers)
     elements = response.json()
@@ -44,7 +44,7 @@ def extract_users(elements):
     return cloud_users, directory_users
 
 
-def match_and_write_to_file(cloud_users, directory_lookup, filename="test.txt"):
+def match_and_write_to_file(cloud_users, directory_lookup, filename="to.txt"):
     with open(filename, "w") as file:
         for cloud_user in cloud_users:
             email = cloud_user['email']
@@ -62,6 +62,6 @@ def process_users(elements):
         match_and_write_to_file(cloud_users, directory_lookup)
 
 
-elements = get_users(token, orgid)
-
-process_users(elements)
+if __name__ == "__main__":
+    elements = get_users(token, org_id)
+    process_users(elements)
