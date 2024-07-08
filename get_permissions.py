@@ -1,6 +1,8 @@
 import os
+import json
 import requests
 from dotenv import load_dotenv
+from mapping_users import get_users, extract_users
 
 
 load_dotenv()
@@ -34,8 +36,41 @@ def get_permissions(token: str, org_id: str, queue: str) -> list:
     return users_permission
 
 
-            
-    # response_update = requests.patch(f"https://api.tracker.yandex.net/v2/queues/{queue}/permissions", headers=headers, data=data)
+def replace_userid_permissions(token: str, org_id: str, queue, filename):
+    with open(filename, "r") as file:
+        rows = file.readlines()
+        old_users = []
+        new_users = []
+        for row in rows:
+            old_users.append(row.split(" ")[0])
+            new_users.append(row.split(" ")[1])
 
-get_queues(token, org_id)
-# get_permissions(token, org_id, queue)
+    headers = {
+                "X-Cloud-Org-Id": f"{org_id}",
+                "Authorization": f"OAuth {token}"
+            }
+    data = {
+            "create": {"users": {"add": new_users, "remove": old_users}},
+            "read": {"users": {"add": new_users, "remove": old_users}},
+            "write": {"users": {"add": new_users, "remove": old_users}},
+            "grant": {"users": {"add": new_users, "remove": old_users}}
+        }
+    
+    response = requests.patch(
+                                f"https://api.tracker.yandex.net/v2/queues/{queue}/permissions",
+                                headers=headers,
+                                data=json.dumps(data)
+                                )
+    print("OLD", old_users, "NEW", new_users)
+    print(response.status_code)
+
+
+queues = get_queues(token, org_id)
+for queue in queues:
+    permissions = get_permissions(token, org_id, queue)
+    print(queue, permissions)
+
+users = get_users(token, org_id)
+old_users, new_users = extract_users(users)
+
+replace_userid_permissions(token, org_id, "COMMONTASKS", "to.txt")
