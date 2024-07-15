@@ -29,7 +29,7 @@ def extract_users(elements):
                 "sources": element["sources"]
             }
 
-            if len(user_dict["sources"]) == 1:
+            if len(user_dict["sources"]) == 1 and not user_dict["dismissed"]:
                 source = user_dict["sources"][0]
                 if source == "cloud":
                     cloud_users.append(user_dict)
@@ -57,6 +57,7 @@ def match_and_write_to_file(
             open(directory_unique_users, "w") as file_unique_directory):
         for cloud_user in cloud_users:
             email = cloud_user['email']
+            print(f"CLOUD: {cloud_user["id"]}, {cloud_user["email"]}, {cloud_user["dismissed"]}")
             if email in directory_lookup:
                 directory_user = directory_lookup[email]
                 print(cloud_user['id'], directory_user['id'], directory_user['email'])
