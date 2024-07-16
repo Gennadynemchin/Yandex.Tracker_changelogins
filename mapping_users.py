@@ -11,8 +11,17 @@ org_id = os.getenv("ORGID")
 
 def get_users(token, org_id):
     headers = {"X-Cloud-Org-Id": f"{org_id}", "Authorization": f"OAuth {token}"}
-    response = requests.get("https://api.tracker.yandex.net/v2/users", headers=headers)
-    elements = response.json()
+
+    currentPage = 1
+    perPage = 150
+    pages = 0
+
+    while int(pages) < currentPage:
+        response = requests.get(f"https://api.tracker.yandex.net/v2/users?perPage={perPage}&currentPage={currentPage}", headers=headers)
+        all_pages = response.headers["X-Total-Pages"]
+        elements = response.json()
+        currentPage += 1
+        pages = all_pages
     return elements
 
 
@@ -25,6 +34,7 @@ def extract_users(elements):
             user_dict = {
                 "id": element["uid"],
                 "email": element["email"],
+                "additional_login": element["email"].split("@")[0], 
                 "dismissed": element["dismissed"],
                 "sources": element["sources"]
             }
@@ -56,24 +66,25 @@ def match_and_write_to_file(
             open(cloud_unique_users, "w") as file_unique_cloud,
             open(directory_unique_users, "w") as file_unique_directory):
         for cloud_user in cloud_users:
-            email = cloud_user['email']
-            print(f"CLOUD: {cloud_user["id"]}, {cloud_user["email"]}, {cloud_user["dismissed"]}")
-            if email in directory_lookup:
-                directory_user = directory_lookup[email]
-                print(cloud_user['id'], directory_user['id'], directory_user['email'])
+            additional_login = cloud_user['additional_login']
+            # print(f"CLOUD: {cloud_user["id"]}, {cloud_user["email"]}, {cloud_user["dismissed"]}")
+            if additional_login in directory_lookup:
+                directory_user = directory_lookup[additional_login]
+                # print(cloud_user['id'], directory_user['id'], directory_user['email'])
                 #file.write(f"{directory_user['id']} {cloud_user['id']} #\n")    #для передачи задачи из 360 организации в облако
                 file.write(f"{cloud_user['id']} {directory_user['id']} #\n")
             else:
                 file_unique_cloud.write(f"{cloud_user['id']}\n")
         for directory_user in directory_users:
-            if directory_user["email"] not in cloud_lookup:
+            if directory_user["additional_login"] not in cloud_lookup:
                 file_unique_directory.write(f"{directory_user["id"]}\n")
 
 
 def process_users(elements):
     cloud_users, directory_users = extract_users(elements)
-    directory_lookup = {user['email']: user for user in directory_users}
-    cloud_lookup = {user['email']: user for user in cloud_users}
+    directory_lookup = {user['additional_login']: user for user in directory_users}
+    cloud_lookup = {user['additional_login']: user for user in cloud_users}
+    # print(cloud_lookup, cloud_users)
 
     if not os.path.isfile("to.txt"):
         match_and_write_to_file(cloud_users, directory_users, directory_lookup, cloud_lookup)
