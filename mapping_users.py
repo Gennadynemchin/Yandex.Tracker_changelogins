@@ -14,14 +14,14 @@ def get_users(token, org_id):
 
     currentPage = 1
     perPage = 150
-    pages = 0
 
-    while int(pages) < currentPage:
+    while True:
         response = requests.get(f"https://api.tracker.yandex.net/v2/users?perPage={perPage}&currentPage={currentPage}", headers=headers)
-        all_pages = response.headers["X-Total-Pages"]
+        all_pages = int(response.headers["X-Total-Pages"])
         elements = response.json()
+        if currentPage >= all_pages:
+            break
         currentPage += 1
-        pages = all_pages
     return elements
 
 
@@ -77,14 +77,13 @@ def match_and_write_to_file(
                 file_unique_cloud.write(f"{cloud_user['id']}\n")
         for directory_user in directory_users:
             if directory_user["additional_login"] not in cloud_lookup:
-                file_unique_directory.write(f"{directory_user["id"]}\n")
+                file_unique_directory.write(f"{directory_user['id']}\n")
 
 
 def process_users(elements):
     cloud_users, directory_users = extract_users(elements)
     directory_lookup = {user['additional_login']: user for user in directory_users}
     cloud_lookup = {user['additional_login']: user for user in cloud_users}
-    # print(cloud_lookup, cloud_users)
 
     if not os.path.isfile("to.txt"):
         match_and_write_to_file(cloud_users, directory_users, directory_lookup, cloud_lookup)
