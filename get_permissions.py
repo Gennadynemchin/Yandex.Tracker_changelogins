@@ -2,130 +2,69 @@ import os
 import json
 import requests
 from dotenv import load_dotenv
-from mapping_users import get_users, extract_users
-
+from mapping_users import get_users
 
 load_dotenv()
 
-token = os.getenv("TOKEN")
-org_id = os.getenv("ORGID")
-# queue = "COMMONTASKS"
+TOKEN = os.getenv("TOKEN")
+ORG_ID = os.getenv("ORGID")
+API_BASE_URL = "https://api.tracker.yandex.net/v2"
+DEFAULT_QUEUE = "COMMONTASKS"
+
+HEADERS = {
+    "X-Cloud-Org-Id": ORG_ID,
+    "Authorization": f"OAuth {TOKEN}"
+}
 
 
-def get_queues(token: str, org_id: str) -> list:
-    headers = {"X-Cloud-Org-Id": f"{org_id}", "Authorization": f"OAuth {token}"}
-    response = requests.get(f"https://api.tracker.yandex.net/v2/queues", headers=headers)
+def get_queues() -> list[str]:
+    response = requests.get(f"{API_BASE_URL}/queues", headers=HEADERS)
+    response.raise_for_status()
+    return [element["key"] for element in response.json()]
+
+
+def get_permissions(queue: str) -> dict[str, list[str]]:
+    response = requests.get(f"{API_BASE_URL}/queues/{queue}/permissions", headers=HEADERS)
+    response.raise_for_status()
     elements = response.json()
-    queues = []
-    for element in elements:
-        queues.append(element["key"])
-    return queues
-
-
-def get_permissions(token: str, org_id: str, queue: str) -> list:
-    headers = {"X-Cloud-Org-Id": f"{org_id}", "Authorization": f"OAuth {token}"}
-    response = requests.get(f"https://api.tracker.yandex.net/v2/queues/{queue}/permissions", headers=headers)
-    elements = response.json()
-    users_permission = []
-    for permission, element in elements.items():
-        if permission in ["read", "write", "create", "grant"] and element.get("users"):
-            users_id = []
-            for user_id in element["users"]:
-                users_id.append(user_id["id"])
-            users_permission.append({permission: users_id})
-    return users_permission
+    return {
+        permission: [user["id"] for user in element["users"]]
+        for permission, element in elements.items()
+        if permission in ["read", "write", "create", "grant"] and element.get("users")
+    }
 
 
 def replace_userid_permissions(
-                                token: str,
-                                org_id: str,
-                                queue,
-                                users_recall_permissions_read,
-                                users_recall_permissions_write,
-                                users_recall_permissions_create,
-                                users_recall_permissions_grant,
-                                users_give_permissions_read,
-                                users_give_permissions_write,
-                                users_give_permissions_create,
-                                users_give_permissions_grant
-                            ):
-    headers = {
-                "X-Cloud-Org-Id": f"{org_id}",
-                "Authorization": f"OAuth {token}"
-            }
+    queue: str,
+    users_recall: dict[str, list[str]],
+    users_give: dict[str, list[str]]
+) -> None:
     data = {
-            "create": {"users": {"add": users_give_permissions_create, "remove": users_recall_permissions_create}},
-            "read": {"users": {"add": users_give_permissions_read, "remove": users_recall_permissions_read}},
-            "write": {"users": {"add": users_give_permissions_write, "remove": users_recall_permissions_write}},
-            "grant": {"users": {"add": users_give_permissions_grant, "remove": users_recall_permissions_grant}}
-        }
-    
-    response = requests.patch(
-                                f"https://api.tracker.yandex.net/v2/queues/{queue}/permissions",
-                                headers=headers,
-                                data=json.dumps(data)
-                                )
-    # print("OLD", old_users, "NEW", new_users)
-    # print(response.status_code)
+        perm: {"users": {"add": users_give[perm], "remove": users_recall[perm]}}
+        for perm in ["create", "read", "write", "grant"]
+    }
+
+    response = requests.patch(f"{API_BASE_URL}/queues/{queue}/permissions", headers=HEADERS, data=json.dumps(data))
+    response.raise_for_status()
 
 
-queues = get_queues(token, org_id)
-
-users = get_users(token, org_id)
-
-
-
-queue = "COMMONTASKS"
-
-permissions = get_permissions(token, org_id, queue)
-
-
-users_recall_permissions_read = []
-users_recall_permissions_write = []
-users_recall_permissions_create = []
-users_recall_permissions_grant = []
-
-users_give_permissions_read = []
-users_give_permissions_write = []
-users_give_permissions_create = []
-users_give_permissions_grant = []
-
-
-with open("to.txt", "r") as file:
-    rows = file.readlines()
-    for permission in permissions:
-        old_read_users = permission.get("read", [])
-        old_write_users = permission.get("write", [])
-        old_create_users = permission.get("create", [])
-        old_grant_users = permission.get("grant", [])
-
-        for row in rows:
+def process_user_permissions(file_path: str, permissions: dict[str, list[str]]) -> tuple[dict[str, list[str]], dict[str, list[str]]]:
+    users_recall = {perm: [] for perm in ["read", "write", "create", "grant"]}
+    users_give = {perm: [] for perm in ["read", "write", "create", "grant"]}
+    with open(file_path, "r") as file:
+        for row in file:
             old_u = row.split(" ")[0]
             new_u = row.split(" ")[1]
-            if old_u in old_read_users:
-                users_recall_permissions_read.append(old_u)
-                users_give_permissions_read.append(new_u)
-            elif old_u in old_write_users:
-                users_recall_permissions_write.append(old_u)
-                users_give_permissions_write.append(new_u)
-            elif old_u in old_create_users:
-                users_recall_permissions_create.append(old_u)
-                users_give_permissions_create.append(new_u)
-            elif old_u in old_grant_users:
-                users_recall_permissions_grant.append(old_u)
-                users_give_permissions_grant.append(new_u)
+            for perm in users_recall:
+                if old_u in permissions.get(perm, []):
+                    users_recall[perm].append(old_u)
+                    users_give[perm].append(new_u)
+    return users_recall, users_give
 
 
-replace_userid_permissions(
-                            token,
-                            org_id,
-                            queue,
-                            users_recall_permissions_read,
-                            users_recall_permissions_write,
-                            users_recall_permissions_create,
-                            users_recall_permissions_grant,
-                            users_give_permissions_read,
-                            users_give_permissions_write,
-                            users_give_permissions_create,
-                            users_give_permissions_grant
-                        )
+if __name__ == "__main__":
+    queues = get_queues()
+    users = get_users(TOKEN, ORG_ID)
+    permissions = get_permissions(DEFAULT_QUEUE)
+    users_recall, users_give = process_user_permissions("to.txt", permissions)
+    replace_userid_permissions(DEFAULT_QUEUE, users_recall, users_give)
