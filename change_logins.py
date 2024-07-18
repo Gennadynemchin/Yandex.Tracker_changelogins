@@ -1,6 +1,8 @@
 import os
+import time
 from yandex_tracker_client import TrackerClient
 from dotenv import load_dotenv
+
 
 
 load_dotenv()
@@ -8,6 +10,7 @@ load_dotenv()
 token = os.getenv("TOKEN")
 org_id = os.getenv("ORGID")
 
+start = time.time()
 
 def changelogins(token, org_id):
 	per_page = 1000
@@ -101,6 +104,9 @@ def changelogins(token, org_id):
 					pages = pages + 1
 
 
+end = time.time()
+elapsed_time = end - start
+print("Время выполнения:", elapsed_time)
+
 if __name__ == "__main__":
 	changelogins(token, org_id)
-		
