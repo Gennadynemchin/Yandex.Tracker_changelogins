@@ -60,13 +60,13 @@ def match_and_write_to_file(
             if email in directory_lookup:
                 directory_user = directory_lookup[email]
                 print(cloud_user['id'], directory_user['id'], directory_user['email'])
-                #file.write(f"{directory_user['id']} {cloud_user['id']} #\n")    #для передачи задачи из 360 организации в облако
+                # file.write(f"{directory_user['id']} {cloud_user['id']} #\n") # для передачи задачи из 360 организации в облако
                 file.write(f"{cloud_user['id']} {directory_user['id']} #\n")
             else:
                 file_unique_cloud.write(f"{cloud_user['id']}\n")
         for directory_user in directory_users:
             if directory_user["email"] not in cloud_lookup:
-                file_unique_directory.write(f"{directory_user["id"]}\n")
+                file_unique_directory.write(f"{directory_user['id']}\n")
 
 
 def process_users(elements):
