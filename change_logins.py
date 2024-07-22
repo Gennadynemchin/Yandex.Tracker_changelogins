@@ -41,13 +41,13 @@ def changelogins(token, org_id):
 
 					for issue in issues:
 						try:
-							issue.update(assignee=new_uid)								
+							issue.update(assignee=new_uid, notify=False, notifyAuthor=False)
 							print (f"Assignee update: {str(issue.key)}")
 						except Exception as e:
 							print (e)
 						if issue.createdBy.id == old_uid:
 							try:
-								issue.update(author=new_uid)
+								issue.update(author=new_uid, notify=False, notifyAuthor=False)
 								print (f"CreatedBy update: {str(issue.key)}")
 							except Exception as e:
 								print (e)
@@ -66,13 +66,13 @@ def changelogins(token, org_id):
 
 					for issue in issues:
 						try:
-							issue.update(author=new_uid)
+							issue.update(author=new_uid, notify=False, notifyAuthor=False)
 							print (f"CreatedBy update: {str(issue.key)}")
 						except Exception as e:
 							print (e)
 						if (issue.assignee) and (issue.assignee.id == old_uid):
 							try:
-								issue.update(assignee=new_uid)
+								issue.update(assignee=new_uid, notify=False, notifyAuthor=False)
 								print (f"Assignee update: {str(issue.key)}")
 							except Exception as e:
 								print (e)
@@ -93,12 +93,12 @@ def changelogins(token, org_id):
 					for issue in issues:
 						try:
 							print(f"Followers update:add: {str(issue.key)}")
-							issue.update(followers={'add': new_uid})								
+							issue.update(followers={'add': new_uid}, notify=False, notifyAuthor=False)
 						except Exception as e:
 							print(e)
 						try:
 							print(f"Followers update:remove: {str(issue.key)}")	
-							issue.update(followers={'remove': old_uid})								
+							issue.update(followers={'remove': old_uid}, notify=False, notifyAuthor=False)
 						except Exception as e:
 							print(e)
 					pages = pages + 1
