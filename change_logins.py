@@ -4,13 +4,14 @@ from yandex_tracker_client import TrackerClient
 from dotenv import load_dotenv
 
 
-
 load_dotenv()
 
 token = os.getenv("TOKEN")
 org_id = os.getenv("ORGID")
 
+
 start = time.time()
+
 
 def changelogins(token, org_id):
 	per_page = 1000
@@ -41,13 +42,13 @@ def changelogins(token, org_id):
 
 					for issue in issues:
 						try:
-							issue.update(assignee=new_uid, notify=False, notifyAuthor=False)
+							issue.update(assignee=new_uid, params={"notify": False, "notifyAuthor": False})								
 							print (f"Assignee update: {str(issue.key)}")
 						except Exception as e:
 							print (e)
 						if issue.createdBy.id == old_uid:
 							try:
-								issue.update(author=new_uid, notify=False, notifyAuthor=False)
+								issue.update(author=new_uid, params={"notify": False, "notifyAuthor": False})
 								print (f"CreatedBy update: {str(issue.key)}")
 							except Exception as e:
 								print (e)
@@ -66,13 +67,13 @@ def changelogins(token, org_id):
 
 					for issue in issues:
 						try:
-							issue.update(author=new_uid, notify=False, notifyAuthor=False)
+							issue.update(author=new_uid, params={"notify": False, "notifyAuthor": False})
 							print (f"CreatedBy update: {str(issue.key)}")
 						except Exception as e:
 							print (e)
 						if (issue.assignee) and (issue.assignee.id == old_uid):
 							try:
-								issue.update(assignee=new_uid, notify=False, notifyAuthor=False)
+								issue.update(assignee=new_uid, params={"notify": False})
 								print (f"Assignee update: {str(issue.key)}")
 							except Exception as e:
 								print (e)
@@ -93,12 +94,12 @@ def changelogins(token, org_id):
 					for issue in issues:
 						try:
 							print(f"Followers update:add: {str(issue.key)}")
-							issue.update(followers={'add': new_uid}, notify=False, notifyAuthor=False)
+							issue.update(followers={'add': new_uid}, params={"notify": False})								
 						except Exception as e:
 							print(e)
 						try:
 							print(f"Followers update:remove: {str(issue.key)}")	
-							issue.update(followers={'remove': old_uid}, notify=False, notifyAuthor=False)
+							issue.update(followers={'remove': old_uid}, params={"notify": False})								
 						except Exception as e:
 							print(e)
 					pages = pages + 1
@@ -107,6 +108,7 @@ def changelogins(token, org_id):
 end = time.time()
 elapsed_time = end - start
 print("Время выполнения:", elapsed_time)
+
 
 if __name__ == "__main__":
 	changelogins(token, org_id)
