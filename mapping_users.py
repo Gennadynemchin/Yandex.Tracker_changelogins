@@ -1,6 +1,9 @@
 import os
+import sys
 import requests
 from dotenv import load_dotenv
+from changelogins_bulk import logger
+from logger import logger
 
 
 load_dotenv()
@@ -48,7 +51,7 @@ def extract_users(elements):
 
         except KeyError as e:
             missing_key = e.args[0]
-            print(f"User {element.get('email', 'unknown')} doesn't have '{missing_key}' element")
+            logger.warning("%s", f"User {element.get('email', 'unknown')} doesn't have '{missing_key}' element")
 
     return cloud_users, directory_users
 
@@ -67,14 +70,19 @@ def match_and_write_to_file(
             open(directory_unique_users, "w") as file_unique_directory):
         for cloud_user in cloud_users:
             additional_login = cloud_user['additional_login']
-            # print(f"CLOUD: {cloud_user["id"]}, {cloud_user["email"]}, {cloud_user["dismissed"]}")
+            
             if additional_login in directory_lookup:
                 directory_user = directory_lookup[additional_login]
-                # print(cloud_user['id'], directory_user['id'], directory_user['email'])
-                #file.write(f"{directory_user['id']} {cloud_user['id']} #\n")    #для передачи задачи из 360 организации в облако
-                file.write(f"{cloud_user['id']} {directory_user['id']} #\n")
+                logger.info("%s", f"It's a match: {cloud_user['id']}, {directory_user['id']}, {directory_user['email']}")
+                if len(sys.argv) > 1 and sys.argv[1] == "--tocloud":
+                    file.write(f"{directory_user['id']} {cloud_user['id']} #\n")
+                    logger.info("%s", f"Yandex360: {directory_user['id']}-->Cloud: {cloud_user['id']} added")
+                else:
+                    file.write(f"{cloud_user['id']} {directory_user['id']} #\n")
+                    logger.info("%s", f"Cloud: {cloud_user['id']}-->Yandex360: {directory_user['id']} added")
             else:
                 file_unique_cloud.write(f"{cloud_user['id']}\n")
+                logger.info("%s", f"User {cloud_user["id"]}, {cloud_user["email"]} added to unique cloud users")
         for directory_user in directory_users:
             if directory_user["additional_login"] not in cloud_lookup:
                 file_unique_directory.write(f"{directory_user['id']}\n")

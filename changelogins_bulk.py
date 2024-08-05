@@ -3,18 +3,10 @@ import sys
 import json
 import requests
 from dotenv import load_dotenv
-from logging import getLogger, basicConfig, FileHandler, StreamHandler, INFO
+from logger import logger
 
 
 load_dotenv()
-
-logger = getLogger(__name__)
-FORMAT = "%(asctime)s : %(name)s : %(levelname)s : %(message)s"
-file_handler = FileHandler("data.log")
-file_handler.setLevel(INFO)
-stream = StreamHandler()
-stream.setLevel(INFO)
-basicConfig(level=INFO, format=FORMAT, handlers=[file_handler, stream])
 
 
 def get_users_list(file):
