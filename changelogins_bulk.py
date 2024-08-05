@@ -1,4 +1,5 @@
 import os
+import sys
 import json
 import requests
 from dotenv import load_dotenv
@@ -17,8 +18,13 @@ basicConfig(level=INFO, format=FORMAT, handlers=[file_handler, stream])
 
 
 def get_users_list(file):
-    with open(file, "r") as users_list:
-        return users_list.readlines()
+    try:
+        with open(file, "r") as users_list:
+            context = users_list.readlines()
+            return context
+    except FileNotFoundError:
+        logger.error("%s", f"File {file} has not been found")
+        sys.exit(0)
 
 
 def assignee_search(
@@ -30,7 +36,9 @@ def assignee_search(
     url = "https://api.tracker.yandex.net/v2/issues/_search"
     token = f"OAuth {token}"
     headers = {"X-Cloud-Org-ID": orgid, "Authorization": token}
-    data = json.dumps({"filter": {filter: old_user_id}})
+    filter = {filter: old_user_id}
+    # filter =  {filter: old_user_id, "queue": []}
+    data = json.dumps({"filter": filter})
 
     while True:
         params = {"perPage": perPage, "page": currentPage}
