@@ -20,7 +20,7 @@ def get_users_list(file):
 
 
 def assignee_search(
-    orgid: str, token: str, filter: str, old_user_id: str, perPage: int
+    orgid: str, token: str, perPage: int, filter: dict
 ) -> list:
     all_keys = []
     current_keys = []
@@ -28,8 +28,6 @@ def assignee_search(
     url = "https://api.tracker.yandex.net/v2/issues/_search"
     token = f"OAuth {token}"
     headers = {"X-Cloud-Org-ID": orgid, "Authorization": token}
-    filter = {filter: old_user_id}
-    # filter =  {filter: old_user_id, "queue": []}
     data = json.dumps({"filter": filter})
 
     while True:
@@ -70,16 +68,17 @@ def assignee_update(
 if __name__ == "__main__":
     orgid = os.getenv("ORGID")
     token = os.getenv("TOKEN")
-    perPage = 10
-    filters = ["assignee", "createdBy", "followers"]
+    perPage = 1000
+    user_roles = ["assignee", "createdBy", "followers"]
     users_list = get_users_list("to.txt")
     
     for user in users_list:
         old_user_id = user.split(" ")[0]
         new_user_id = user.split(" ")[1]
 
-        for filter in filters:
-            all_issues = assignee_search(orgid, token, filter, old_user_id, perPage)
+        for role in user_roles:
+            filter = {role: old_user_id, "queue": ["COMMONTASKS"]}
+            all_issues = assignee_search(orgid, token, perPage, filter)
             for issues in all_issues:
                 logger.info("%s", f"Found {len(issues)} tasks")
                 logger.info("%s", f"Going to update {filter} role for user {old_user_id}-->{new_user_id} in following issues: {issues}")
