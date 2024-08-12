@@ -15,7 +15,9 @@ def get_queues(base_url: str, orgid: str, orgheader: str, token: str) -> list[st
     return [element["key"] for element in response.json()]
 
 
-def get_permissions(base_url: str, orgid: str, orgheader: str, token: str, queue: str) -> dict[str, list[str]]:
+def get_permissions(
+    base_url: str, orgid: str, orgheader: str, token: str, queue: str
+) -> dict[str, list[str]]:
     headers = {orgheader: orgid, "Authorization": token}
     response = requests.get(f"{base_url}/queues/{queue}/permissions", headers=headers)
     response.raise_for_status()
@@ -34,7 +36,7 @@ def replace_userid_permissions(
     token: str,
     queue: str,
     users_recall: dict[str, list[str]],
-    users_give: dict[str, list[str]]
+    users_give: dict[str, list[str]],
 ) -> None:
     headers = {orgheader: orgid, "Authorization": token}
     data = {
@@ -42,11 +44,15 @@ def replace_userid_permissions(
         for perm in ["create", "read", "write", "grant"]
     }
 
-    response = requests.patch(f"{base_url}/queues/{queue}/permissions", headers=headers, data=json.dumps(data))
+    response = requests.patch(
+        f"{base_url}/queues/{queue}/permissions", headers=headers, data=json.dumps(data)
+    )
     response.raise_for_status()
 
 
-def process_user_permissions(file_path: str, permissions: dict[str, list[str]]) -> tuple[dict[str, list[str]], dict[str, list[str]]]:
+def process_user_permissions(
+    file_path: str, permissions: dict[str, list[str]]
+) -> tuple[dict[str, list[str]], dict[str, list[str]]]:
     users_recall = {perm: [] for perm in ["read", "write", "create", "grant"]}
     users_give = {perm: [] for perm in ["read", "write", "create", "grant"]}
     with open(file_path, "r") as file:
@@ -71,4 +77,6 @@ if __name__ == "__main__":
     users = get_users(TOKEN, ORG_ID, ORGHEADER)
     permissions = get_permissions(BASEURL, ORG_ID, TOKEN, DEFAULT_QUEUE)
     users_recall, users_give = process_user_permissions("to.txt", permissions)
-    replace_userid_permissions(BASEURL, ORG_ID, ORGHEADER, TOKEN, DEFAULT_QUEUE, users_recall, users_give)
+    replace_userid_permissions(
+        BASEURL, ORG_ID, ORGHEADER, TOKEN, DEFAULT_QUEUE, users_recall, users_give
+    )
