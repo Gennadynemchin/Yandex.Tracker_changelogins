@@ -68,15 +68,15 @@ def process_user_permissions(
 
 if __name__ == "__main__":
     TOKEN = os.getenv("TOKEN")
-    ORG_ID = os.getenv("ORGID")
+    ORGID = os.getenv("ORGID")
     ORGHEADER = os.getenv("ORGHEADER")
     BASEURL = os.getenv("BASEURL")
     DEFAULT_QUEUE = "COMMONTASKS"
 
     queues = get_queues()
-    users = get_users(TOKEN, ORG_ID, ORGHEADER)
-    permissions = get_permissions(BASEURL, ORG_ID, TOKEN, DEFAULT_QUEUE)
+    users = get_users(TOKEN, ORGID, ORGHEADER)
+    permissions = get_permissions(BASEURL, ORGID, TOKEN, DEFAULT_QUEUE)
     users_recall, users_give = process_user_permissions("to.txt", permissions)
     replace_userid_permissions(
-        BASEURL, ORG_ID, ORGHEADER, TOKEN, DEFAULT_QUEUE, users_recall, users_give
+        BASEURL, ORGID, ORGHEADER, TOKEN, DEFAULT_QUEUE, users_recall, users_give
     )
