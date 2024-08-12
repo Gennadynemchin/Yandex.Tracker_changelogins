@@ -11,7 +11,6 @@ load_dotenv()
 
 def get_users(base_url: str, orgid: str, orgheader: str, token: str):
     headers = {orgheader: orgid, "Authorization": f"OAuth {token}"}
-
     currentPage = 1
     perPage = 150
 

@@ -26,8 +26,7 @@ def assignee_search(
     current_keys = []
     currentPage = 1
     url = f"{base_url}/issues/_search"
-    token = f"OAuth {token}"
-    headers = {orgheader: orgid, "Authorization": token}
+    headers = {orgheader: orgid, "Authorization": f"OAuth {token}"}
     data = json.dumps({"filter": filter})
 
     while True:
@@ -61,8 +60,7 @@ def assignee_update(
     issues: list,
 ):
     url = f"{base_url}/bulkchange/_update"
-    token = f"OAuth {token}"
-    headers = {orgheader: orgid, "Authorization": token}
+    headers = {orgheader: orgid, "Authorization": f"OAuth {token}"}
     data = json.dumps({"issues": issues, "values": {filter: new_user_id}})
     response = requests.post(url, headers=headers, data=data)
     response.raise_for_status()

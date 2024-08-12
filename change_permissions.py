@@ -3,25 +3,29 @@ import json
 import requests
 from dotenv import load_dotenv
 from mapping_users import get_users
+from logger import logger
 
 
 load_dotenv()
 
 
 def get_queues(base_url: str, orgid: str, orgheader: str, token: str) -> list[str]:
-    headers = {orgheader: orgid, "Authorization": token}
+    headers = {orgheader: orgid, "Authorization": f"OAuth {token}"}
     response = requests.get(f"{base_url}/queues", headers=headers)
     response.raise_for_status()
-    return [element["key"] for element in response.json()]
+    result = [element["key"] for element in response.json()]
+    logger.info("%s", f"The following queues was found: {result}")
+    return result
 
 
 def get_permissions(
     base_url: str, orgid: str, orgheader: str, token: str, queue: str
 ) -> dict[str, list[str]]:
-    headers = {orgheader: orgid, "Authorization": token}
+    headers = {orgheader: orgid, "Authorization": f"OAuth {token}"}
     response = requests.get(f"{base_url}/queues/{queue}/permissions", headers=headers)
     response.raise_for_status()
     elements = response.json()
+    logger.info("%s", f"Got permissions info: {elements}")
     return {
         permission: [user["id"] for user in element["users"]]
         for permission, element in elements.items()
@@ -38,15 +42,16 @@ def replace_userid_permissions(
     users_recall: dict[str, list[str]],
     users_give: dict[str, list[str]],
 ) -> None:
-    headers = {orgheader: orgid, "Authorization": token}
+    headers = {orgheader: orgid, "Authorization": f"OAuth {token}"}
     data = {
         perm: {"users": {"add": users_give[perm], "remove": users_recall[perm]}}
         for perm in ["create", "read", "write", "grant"]
     }
-
+    logger.info("%s", f"The following data is ready to upload: {data}")
     response = requests.patch(
         f"{base_url}/queues/{queue}/permissions", headers=headers, data=json.dumps(data)
     )
+    logger.info("%s", f"Server answered: {response.json()}")
     response.raise_for_status()
 
 
@@ -63,6 +68,8 @@ def process_user_permissions(
                 if old_u in permissions.get(perm, []):
                     users_recall[perm].append(old_u)
                     users_give[perm].append(new_u)
+    logger.info("%s", f"Got users for recall permissions: {users_recall}")
+    logger.info("%s", f"Got users for give permissions: {users_give}")
     return users_recall, users_give
 
 
