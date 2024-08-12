@@ -9,25 +9,25 @@ from logger import logger
 load_dotenv()
 
 
-def get_users_list(file):
+def get_users_list(filename: str) -> None:
     try:
-        with open(file, "r") as users_list:
+        with open(filename, "r") as users_list:
             context = users_list.readlines()
             return context
     except FileNotFoundError:
-        logger.error("%s", f"File {file} has not been found")
+        logger.error("%s", f"File {filename} has not been found")
         sys.exit(0)
 
 
 def assignee_search(
-    orgid: str, token: str, perPage: int, filter: dict
+    base_url: str, orgid: str, orgheader: str, token: str, perPage: int, filter: dict
 ) -> list:
     all_keys = []
     current_keys = []
     currentPage = 1
-    url = "https://api.tracker.yandex.net/v2/issues/_search"
+    url = f"{base_url}/issues/_search"
     token = f"OAuth {token}"
-    headers = {"X-Cloud-Org-ID": orgid, "Authorization": token}
+    headers = {orgheader: orgid, "Authorization": token}
     data = json.dumps({"filter": filter})
 
     while True:
@@ -52,11 +52,17 @@ def assignee_search(
 
 
 def assignee_update(
-    orgid: str, token: str, filter: str, new_user_id: str, issues: list
+    base_url: str,
+    orgid: str,
+    orgheader: str,
+    token: str,
+    filter: str,
+    new_user_id: str,
+    issues: list,
 ):
-    url = "https://api.tracker.yandex.net/v2/bulkchange/_update"
+    url = f"{base_url}/bulkchange/_update"
     token = f"OAuth {token}"
-    headers = {"X-Cloud-Org-ID": orgid, "Authorization": token}
+    headers = {orgheader: orgid, "Authorization": token}
     data = json.dumps({"issues": issues, "values": {filter: new_user_id}})
     response = requests.post(url, headers=headers, data=data)
     response.raise_for_status()
@@ -66,20 +72,27 @@ def assignee_update(
 
 
 if __name__ == "__main__":
-    orgid = os.getenv("ORGID")
-    token = os.getenv("TOKEN")
+    BASEURL = os.getenv("BASEURL")
+    ORGID = os.getenv("ORGID")
+    TOKEN = os.getenv("TOKEN")
+    ORGHEADER = os.getenv("ORGHEADER")
     perPage = 1000
     user_roles = ["assignee", "createdBy", "followers"]
     users_list = get_users_list("to.txt")
-    
+
     for user in users_list:
         old_user_id = user.split(" ")[0]
         new_user_id = user.split(" ")[1]
 
         for role in user_roles:
             filter = {role: old_user_id, "queue": ["COMMONTASKS"]}
-            all_issues = assignee_search(orgid, token, perPage, filter)
+            all_issues = assignee_search(
+                BASEURL, ORGID, ORGHEADER, TOKEN, perPage, filter
+            )
             for issues in all_issues:
                 logger.info("%s", f"Found {len(issues)} tasks")
-                logger.info("%s", f"Going to update {filter} role for user {old_user_id}-->{new_user_id} in following issues: {issues}")
-                assignee_update(orgid, token, filter, new_user_id, issues)
+                logger.info(
+                    "%s",
+                    f"Going to update {filter} role for user {old_user_id}-->{new_user_id} in following issues: {issues}",
+                )
+                assignee_update(BASEURL, ORGID, TOKEN, filter, new_user_id, issues)
