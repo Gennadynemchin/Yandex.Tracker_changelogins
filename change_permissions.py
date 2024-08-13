@@ -6,8 +6,7 @@ from logger import logger
 
 
 def get_queues(creds) -> list[str]:
-    headers = {creds.orgheader: creds.orgid, "Authorization": f"OAuth {creds.token}"}
-    response = requests.get(f"{creds.baseurl}/queues", headers=headers)
+    response = requests.get(f"{creds.baseurl}/queues", headers=creds.get_headers())
     response.raise_for_status()
     result = [element["key"] for element in response.json()]
     logger.info("%s", f"The following queues was found: {result}\n")
@@ -15,9 +14,8 @@ def get_queues(creds) -> list[str]:
 
 
 def get_permissions(creds, queue: str) -> dict[str, list[str]]:
-    headers = {creds.orgheader: creds.orgid, "Authorization": f"OAuth {creds.token}"}
     response = requests.get(
-        f"{creds.baseurl}/queues/{queue}/permissions", headers=headers
+        f"{creds.baseurl}/queues/{queue}/permissions", headers=creds.get_headers()
     )
     response.raise_for_status()
     elements = response.json()
@@ -35,7 +33,6 @@ def replace_userid_permissions(
     users_recall: dict[str, list[str]],
     users_give: dict[str, list[str]],
 ) -> None:
-    headers = {creds.orgheader: creds.orgid, "Authorization": f"OAuth {creds.token}"}
     data = {
         perm: {"users": {"add": users_give[perm], "remove": users_recall[perm]}}
         for perm in ["create", "read", "write", "grant"]
@@ -43,7 +40,7 @@ def replace_userid_permissions(
     logger.info("%s", f"The following data is ready to upload: {data}\n")
     response = requests.patch(
         f"{creds.baseurl}/queues/{queue}/permissions",
-        headers=headers,
+        headers=creds.get_headers(),
         data=json.dumps(data),
     )
     logger.info("%s", f"Server answered: {response.json()}\n")

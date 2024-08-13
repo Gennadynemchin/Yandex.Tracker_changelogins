@@ -7,14 +7,13 @@ from logger import logger
 
 
 def get_users(creds):
-    headers = {creds.orgheader: creds.orgid, "Authorization": f"OAuth {creds.token}"}
     currentPage = 1
     perPage = 150
 
     while True:
         response = requests.get(
             f"{creds.baseurl}/users?perPage={perPage}&currentPage={currentPage}",
-            headers=headers,
+            headers=creds.get_headers(),
         )
         all_pages = int(response.headers["X-Total-Pages"])
         elements = response.json()

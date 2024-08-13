@@ -20,12 +20,11 @@ def assignee_search(creds, perPage: int, filter: dict) -> list:
     current_keys = []
     currentPage = 1
     url = f"{creds.baseurl}/issues/_search"
-    headers = {creds.orgheader: creds.orgid, "Authorization": f"OAuth {creds.token}"}
     data = json.dumps({"filter": filter})
 
     while True:
         params = {"perPage": perPage, "page": currentPage}
-        response = requests.post(url, params=params, headers=headers, data=data)
+        response = requests.post(url, params=params, headers=creds.get_headers(), data=data)
         response.raise_for_status()
         allPages = int(response.headers["X-Total-Pages"])
         issues = response.json()
@@ -51,9 +50,8 @@ def assignee_update(
     issues: list,
 ):
     url = f"{creds.baseurl}/bulkchange/_update"
-    headers = {creds.orgheader: creds.orgid, "Authorization": f"OAuth {creds.token}"}
     data = json.dumps({"issues": issues, "values": {filter: new_user_id}})
-    response = requests.post(url, headers=headers, data=data)
+    response = requests.post(url, headers=creds.get_headers(), data=data)
     response.raise_for_status()
     response_data = response.json()
     logger.info("%s", f"Server answered: {response_data}\n")
