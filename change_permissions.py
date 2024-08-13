@@ -1,31 +1,27 @@
-import os
 import json
 import requests
-from dotenv import load_dotenv
 from mapping_users import get_users
+from settings import creds
 from logger import logger
 
 
-load_dotenv()
-
-
-def get_queues(base_url: str, orgid: str, orgheader: str, token: str) -> list[str]:
-    headers = {orgheader: orgid, "Authorization": f"OAuth {token}"}
-    response = requests.get(f"{base_url}/queues", headers=headers)
+def get_queues(creds) -> list[str]:
+    headers = {creds.orgheader: creds.orgid, "Authorization": f"OAuth {creds.token}"}
+    response = requests.get(f"{creds.baseurl}/queues", headers=headers)
     response.raise_for_status()
     result = [element["key"] for element in response.json()]
-    logger.info("%s", f"The following queues was found: {result}")
+    logger.info("%s", f"The following queues was found: {result}\n")
     return result
 
 
-def get_permissions(
-    base_url: str, orgid: str, orgheader: str, token: str, queue: str
-) -> dict[str, list[str]]:
-    headers = {orgheader: orgid, "Authorization": f"OAuth {token}"}
-    response = requests.get(f"{base_url}/queues/{queue}/permissions", headers=headers)
+def get_permissions(creds, queue: str) -> dict[str, list[str]]:
+    headers = {creds.orgheader: creds.orgid, "Authorization": f"OAuth {creds.token}"}
+    response = requests.get(
+        f"{creds.baseurl}/queues/{queue}/permissions", headers=headers
+    )
     response.raise_for_status()
     elements = response.json()
-    logger.info("%s", f"Got permissions info: {elements}")
+    logger.info("%s", f"Got permissions info: {elements}\n")
     return {
         permission: [user["id"] for user in element["users"]]
         for permission, element in elements.items()
@@ -34,24 +30,23 @@ def get_permissions(
 
 
 def replace_userid_permissions(
-    base_url: str,
-    orgid: str,
-    orgheader: str,
-    token: str,
+    creds,
     queue: str,
     users_recall: dict[str, list[str]],
     users_give: dict[str, list[str]],
 ) -> None:
-    headers = {orgheader: orgid, "Authorization": f"OAuth {token}"}
+    headers = {creds.orgheader: creds.orgid, "Authorization": f"OAuth {creds.token}"}
     data = {
         perm: {"users": {"add": users_give[perm], "remove": users_recall[perm]}}
         for perm in ["create", "read", "write", "grant"]
     }
-    logger.info("%s", f"The following data is ready to upload: {data}")
+    logger.info("%s", f"The following data is ready to upload: {data}\n")
     response = requests.patch(
-        f"{base_url}/queues/{queue}/permissions", headers=headers, data=json.dumps(data)
+        f"{creds.baseurl}/queues/{queue}/permissions",
+        headers=headers,
+        data=json.dumps(data),
     )
-    logger.info("%s", f"Server answered: {response.json()}")
+    logger.info("%s", f"Server answered: {response.json()}\n")
     response.raise_for_status()
 
 
@@ -68,22 +63,16 @@ def process_user_permissions(
                 if old_u in permissions.get(perm, []):
                     users_recall[perm].append(old_u)
                     users_give[perm].append(new_u)
-    logger.info("%s", f"Got users for recall permissions: {users_recall}")
-    logger.info("%s", f"Got users for give permissions: {users_give}")
+    logger.info("%s", f"Got users for recall permissions: {users_recall}\n")
+    logger.info("%s", f"Got users for give permissions: {users_give}\n")
     return users_recall, users_give
 
 
 if __name__ == "__main__":
-    TOKEN = os.getenv("TOKEN")
-    ORGID = os.getenv("ORGID")
-    ORGHEADER = os.getenv("ORGHEADER")
-    BASEURL = os.getenv("BASEURL")
     DEFAULT_QUEUE = "COMMONTASKS"
 
-    queues = get_queues()
-    users = get_users(TOKEN, ORGID, ORGHEADER)
-    permissions = get_permissions(BASEURL, ORGID, TOKEN, DEFAULT_QUEUE)
+    queues = get_queues(creds)
+    users = get_users(creds)
+    permissions = get_permissions(creds, DEFAULT_QUEUE)
     users_recall, users_give = process_user_permissions("to.txt", permissions)
-    replace_userid_permissions(
-        BASEURL, ORGID, ORGHEADER, TOKEN, DEFAULT_QUEUE, users_recall, users_give
-    )
+    replace_userid_permissions(creds, DEFAULT_QUEUE, users_recall, users_give)

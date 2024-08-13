@@ -1,22 +1,19 @@
 import os
 import sys
 import requests
-from dotenv import load_dotenv
+from settings import creds
 from changelogins_bulk import logger
 from logger import logger
 
 
-load_dotenv()
-
-
-def get_users(base_url: str, orgid: str, orgheader: str, token: str):
-    headers = {orgheader: orgid, "Authorization": f"OAuth {token}"}
+def get_users(creds):
+    headers = {creds.orgheader: creds.orgid, "Authorization": f"OAuth {creds.token}"}
     currentPage = 1
     perPage = 150
 
     while True:
         response = requests.get(
-            f"{base_url}/users?perPage={perPage}&currentPage={currentPage}",
+            f"{creds.baseurl}/users?perPage={perPage}&currentPage={currentPage}",
             headers=headers,
         )
         all_pages = int(response.headers["X-Total-Pages"])
@@ -52,7 +49,7 @@ def extract_users(elements):
             missing_key = e.args[0]
             logger.warning(
                 "%s",
-                f"User {element.get('email', 'unknown')} doesn't have '{missing_key}' element",
+                f"User {element.get('email', 'unknown')} doesn't have '{missing_key}' element\n",
             )
 
     return cloud_users, directory_users
@@ -79,25 +76,25 @@ def match_and_write_to_file(
                 directory_user = directory_lookup[additional_login]
                 logger.info(
                     "%s",
-                    f"It's a match: {cloud_user['id']}, {directory_user['id']}, {directory_user['email']}",
+                    f"It's a match: {cloud_user['id']}, {directory_user['id']}, {directory_user['email']}\n",
                 )
                 if len(sys.argv) > 1 and sys.argv[1] == "--tocloud":
                     file.write(f"{directory_user['id']} {cloud_user['id']} #\n")
                     logger.info(
                         "%s",
-                        f"Yandex360: {directory_user['id']}-->Cloud: {cloud_user['id']} added",
+                        f"Yandex360: {directory_user['id']}-->Cloud: {cloud_user['id']} added\n",
                     )
                 else:
                     file.write(f"{cloud_user['id']} {directory_user['id']} #\n")
                     logger.info(
                         "%s",
-                        f"Cloud: {cloud_user['id']}-->Yandex360: {directory_user['id']} added",
+                        f"Cloud: {cloud_user['id']}-->Yandex360: {directory_user['id']} added\n",
                     )
             else:
                 file_unique_cloud.write(f"{cloud_user['id']}\n")
                 logger.info(
                     "%s",
-                    f"User {cloud_user["id"]}, {cloud_user["email"]} added to unique cloud users",
+                    f"User {cloud_user["id"]}, {cloud_user["email"]} added to unique cloud users\n",
                 )
         for directory_user in directory_users:
             if directory_user["additional_login"] not in cloud_lookup:
@@ -116,8 +113,5 @@ def process_users(elements):
 
 
 if __name__ == "__main__":
-    TOKEN = os.getenv("TOKEN")
-    ORGID = os.getenv("ORGID")
-    ORGHEADER = os.getenv("ORGHEADER")
-    elements = get_users(TOKEN, ORGID, ORGHEADER, TOKEN)
+    elements = get_users(creds)
     process_users(elements)

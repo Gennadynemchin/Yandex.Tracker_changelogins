@@ -1,12 +1,8 @@
-import os
 import sys
 import json
 import requests
-from dotenv import load_dotenv
+from settings import creds
 from logger import logger
-
-
-load_dotenv()
 
 
 def get_users_list(filename: str) -> None:
@@ -15,18 +11,16 @@ def get_users_list(filename: str) -> None:
             context = users_list.readlines()
             return context
     except FileNotFoundError:
-        logger.error("%s", f"File {filename} has not been found")
+        logger.error("%s", f"File {filename} has not been found\n")
         sys.exit(0)
 
 
-def assignee_search(
-    base_url: str, orgid: str, orgheader: str, token: str, perPage: int, filter: dict
-) -> list:
+def assignee_search(creds, perPage: int, filter: dict) -> list:
     all_keys = []
     current_keys = []
     currentPage = 1
-    url = f"{base_url}/issues/_search"
-    headers = {orgheader: orgid, "Authorization": f"OAuth {token}"}
+    url = f"{creds.baseurl}/issues/_search"
+    headers = {creds.orgheader: creds.orgid, "Authorization": f"OAuth {creds.token}"}
     data = json.dumps({"filter": filter})
 
     while True:
@@ -51,29 +45,22 @@ def assignee_search(
 
 
 def assignee_update(
-    base_url: str,
-    orgid: str,
-    orgheader: str,
-    token: str,
+    creds,
     filter: str,
     new_user_id: str,
     issues: list,
 ):
-    url = f"{base_url}/bulkchange/_update"
-    headers = {orgheader: orgid, "Authorization": f"OAuth {token}"}
+    url = f"{creds.baseurl}/bulkchange/_update"
+    headers = {creds.orgheader: creds.orgid, "Authorization": f"OAuth {creds.token}"}
     data = json.dumps({"issues": issues, "values": {filter: new_user_id}})
     response = requests.post(url, headers=headers, data=data)
     response.raise_for_status()
     response_data = response.json()
-    logger.info("%s", f"Server answered: {response_data}")
+    logger.info("%s", f"Server answered: {response_data}\n")
     return response_data
 
 
 if __name__ == "__main__":
-    BASEURL = os.getenv("BASEURL")
-    ORGID = os.getenv("ORGID")
-    TOKEN = os.getenv("TOKEN")
-    ORGHEADER = os.getenv("ORGHEADER")
     perPage = 1000
     user_roles = ["assignee", "createdBy", "followers"]
     users_list = get_users_list("to.txt")
@@ -84,13 +71,11 @@ if __name__ == "__main__":
 
         for role in user_roles:
             filter = {role: old_user_id, "queue": ["COMMONTASKS"]}
-            all_issues = assignee_search(
-                BASEURL, ORGID, ORGHEADER, TOKEN, perPage, filter
-            )
+            all_issues = assignee_search(creds, perPage, filter)
             for issues in all_issues:
-                logger.info("%s", f"Found {len(issues)} tasks")
+                logger.info("%s", f"Found {len(issues)} tasks\n")
                 logger.info(
                     "%s",
-                    f"Going to update {filter} role for user {old_user_id}-->{new_user_id} in following issues: {issues}",
+                    f"Going to update {filter} role for user {old_user_id}-->{new_user_id} in following issues: {issues}\n",
                 )
-                assignee_update(BASEURL, ORGID, TOKEN, filter, new_user_id, issues)
+                assignee_update(creds, filter, new_user_id, issues)
