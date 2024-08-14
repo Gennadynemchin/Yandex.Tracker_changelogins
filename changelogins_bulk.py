@@ -21,8 +21,7 @@ def assignee_search(creds, filter: str, old_user_id: str, perPage: int) -> list:
     currentPage = 1
     url = f"{creds.baseurl}/issues/_search"
     headers = creds.headers
-    filter = {filter: old_user_id}
-    # filter =  {filter: old_user_id, "queue": []}
+    filter =  {filter: old_user_id, "queue": [creds.queue]}
     data = json.dumps({"filter": filter})
 
     while True:
@@ -46,9 +45,8 @@ def assignee_search(creds, filter: str, old_user_id: str, perPage: int) -> list:
 
 def assignee_update(creds, filter: str, new_user_id: str, issues: list):
     url = f"{creds.baseurl}/bulkchange/_update"
-    headers = creds.headers
     data = json.dumps({"issues": issues, "values": {filter: new_user_id}})
-    response = requests.post(url, headers=headers, data=data)
+    response = requests.post(url, headers=creds.headers, data=data)
     response.raise_for_status()
     response_data = response.json()
     logger.info("%s", f"Server answered: {response_data}")
@@ -56,7 +54,7 @@ def assignee_update(creds, filter: str, new_user_id: str, issues: list):
 
 
 if __name__ == "__main__":
-    perPage = 10
+    perPage = 100
     filters = ["assignee", "createdBy", "followers"]
     users_list = get_users_list("to.txt")
 

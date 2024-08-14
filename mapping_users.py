@@ -13,7 +13,7 @@ def get_users(creds):
     while True:
         response = requests.get(
             f"{creds.baseurl}/users?perPage={perPage}&currentPage={currentPage}",
-            headers=creds.get_headers(),
+            headers=creds.headers,
         )
         all_pages = int(response.headers["X-Total-Pages"])
         elements = response.json()

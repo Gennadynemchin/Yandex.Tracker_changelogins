@@ -6,7 +6,7 @@ from logger import logger
 
 def get_copmponent_permissions(creds, component_id: str) -> dict:
     response = requests.get(
-        f"{creds.baseurl}/components/{component_id}/access", headers=creds.get_headers()
+        f"{creds.baseurl}/components/{component_id}/access", headers=creds.headers
     )
     response.raise_for_status()
     elements = response.json()
@@ -58,7 +58,7 @@ def change_component_permissions(
     )
     response = requests.patch(
         f"{creds.baseurl}/components/{component_id}/permissions",
-        headers=creds.get_headers(),
+        headers=creds.headers,
         data=data,
         params=params,
     )

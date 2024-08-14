@@ -13,9 +13,6 @@ class Credentials:
         self.orgheader = os.getenv("ORGHEADER")
         self.queue = os.getenv("QUEUE")
         self.headers = {self.orgheader: self.orgid, "Authorization": f"OAuth {self.token}"}
-    
-    def get_headers(self):
-        return {self.orgheader: self.orgid, "Authorization": f"OAuth {self.token}"}
 
 
 creds = Credentials()
