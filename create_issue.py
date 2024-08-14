@@ -1,30 +1,21 @@
-import os
 import requests
 import json
-from dotenv import load_dotenv
+from settings import creds
 from time import time
 
 
-load_dotenv()
-
-
-def create_issue(token, org_id):
+def create_issue(creds, assignee):
     current_timestamp = time()
     data = json.dumps({
-    "queue": "COMMONTASKS",
+    "queue": creds.queue,
     "summary": f"AutoCreatedIssue-{current_timestamp}",
     "type": "task",
-    "assignee": "8000000000000004"
+    "assignee": assignee
 })
-    url = "https://api.tracker.yandex.net/v2/issues"
-    headers = {"X-Cloud-Org-Id": f"{org_id}", "Authorization": f"OAuth {token}"}
-    response = requests.post(url, headers=headers, data=data)
+    url = f"{creds.baseurl}/issues"
+    response = requests.post(url, headers=creds.get_headers(), data=data)
     return response.json()
 
-
-token = os.getenv("TOKEN")
-org_id = os.getenv("ORGID")
-
-for x in range(1, 11):
-    create_issue(token, org_id)
+for x in range(1, 100):
+    create_issue(creds, "gnemchin")
     print(x)
