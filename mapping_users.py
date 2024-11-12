@@ -9,18 +9,24 @@ from logger import logger
 def get_users(creds):
     currentPage = 1
     perPage = 150
+    all_users = []
 
     while True:
+        params = {"perPage": perPage, "page": currentPage}
         response = requests.get(
-            f"{creds.baseurl}/users?perPage={perPage}&currentPage={currentPage}",
+            f"{creds.baseurl}/users",
             headers=creds.headers,
+            params=params,
         )
-        all_pages = int(response.headers["X-Total-Pages"])
+        if response.status_code != 200:
+            raise Exception(f"Failed to fetch users: {response.status_code} {response.text}")
+        all_pages = int(response.headers.get("X-Total-Pages", 0))
         elements = response.json()
+        all_users.extend(elements)
         if currentPage >= all_pages:
             break
         currentPage += 1
-    return elements
+    return all_users
 
 
 def extract_users(elements):
