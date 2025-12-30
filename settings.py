@@ -8,6 +8,7 @@ load_dotenv()
 class Credentials:
     def __init__(self):
         self.baseurl = os.getenv("BASEURL")
+        self.v3url = os.getenv("V3URL")
         self.orgid = os.getenv("ORGID")
         self.token = os.getenv("TOKEN")
         self.orgheader = os.getenv("ORGHEADER")

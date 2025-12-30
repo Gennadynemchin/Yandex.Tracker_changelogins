@@ -1,10 +1,12 @@
 import json
 import requests
+from requests.exceptions import HTTPError
 from settings import creds
 from logger import logger
+from get_components import get_all_components
 
 
-def get_copmponent_permissions(creds, component_id: str) -> dict:
+def get_component_permissions(creds, component_id: str) -> dict:
     response = requests.get(
         f"{creds.baseurl}/components/{component_id}/access", headers=creds.headers
     )
@@ -54,7 +56,7 @@ def change_component_permissions(
     data = json.dumps(permissions_details["data"])
     logger.info(
         "%s",
-        f"Going to change permissions for component: {component_id} with following usaers: {data}\n",
+        f"Going to change permissions for component: {component_id} with following users: {data}\n",
     )
     response = requests.patch(
         f"{creds.baseurl}/components/{component_id}/permissions",
@@ -67,7 +69,12 @@ def change_component_permissions(
 
 
 if __name__ == "__main__":
-    COMPONENT_ID = "3"
-    permissions_data = get_copmponent_permissions(creds, COMPONENT_ID)
-    new_permissions_data = replace_component_permissions("to.txt", permissions_data)
-    change_component_permissions(creds, COMPONENT_ID, new_permissions_data)
+    all_components = get_all_components(creds)
+    print(all_components)
+    for component in all_components:
+        try:
+            permissions_data = get_component_permissions(creds, component)
+            new_permissions_data = replace_component_permissions("to.txt", permissions_data)
+            change_component_permissions(creds, component, new_permissions_data)
+        except HTTPError:
+            logger.exception(f"HTTP error occurred for component {component}")
