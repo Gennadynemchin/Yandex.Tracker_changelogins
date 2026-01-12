@@ -8,3 +8,5 @@ unique_cloud_users.txt
 unique_directory_users.txt
 .vscode/launch.json
 data.log
+*.xml
+*.idea

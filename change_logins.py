@@ -15,7 +15,7 @@ def changelogins(token, org_id):
 	if os.path.isfile("to.txt"): 
 		text_file = open("to.txt", "r")
 		data = text_file.readlines()
-		text_file.close
+		text_file.close()
 		for line in data:
 			line = line.partition("#")
 			line = line[0]
