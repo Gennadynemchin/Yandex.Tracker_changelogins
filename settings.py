@@ -5,6 +5,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 ENTITY_TYPES = ["project", "portfolio", "goal"]
+PERMISSION_ROLES = ["create", "read", "writeNoAssign", "write", "grant"]
 
 class Credentials:
     def __init__(self):
