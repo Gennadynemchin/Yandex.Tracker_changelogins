@@ -10,3 +10,4 @@ unique_directory_users.txt
 data.log
 *.xml
 *.idea
+/users_info.txt
