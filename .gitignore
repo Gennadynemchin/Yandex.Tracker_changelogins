@@ -4,6 +4,7 @@ venv
 __pycache__
 test.txt
 to.txt
+queues.txt
 unique_cloud_users.txt
 unique_directory_users.txt
 .vscode/launch.json
