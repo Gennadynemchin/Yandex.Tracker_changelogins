@@ -14,15 +14,14 @@ def get_entities(crd):
         elements = response.json()
         logger.info("Server answered: %s", elements)
         output_data[ent] = elements
-        logger.info(
-            "Fetched %s: %d items", ent, len(elements.get("values", []))
-        )
+        logger.info("Fetched %s: %d items", ent, len(elements.get("values", [])))
     return output_data
 
 
 def get_entities_permissions(crd, ent_type: str, ent_id: str):
     response = requests.get(
-        f"{crd.v3url}/entities/{ent_type}/{ent_id}/extendedPermissions", headers=crd.headers
+        f"{crd.v3url}/entities/{ent_type}/{ent_id}/extendedPermissions",
+        headers=crd.headers,
     )
     response.raise_for_status()
     elements = response.json()
@@ -42,18 +41,20 @@ def parse_entities(crd, data):
         output_data[ent_type] = []
         for ent_id in ids:
             data_permissions = get_entities_permissions(crd, ent_type, ent_id)
-            output_data[ent_type].append({"entity_id": ent_id, "permissions": data_permissions.get("acl")})
+            output_data[ent_type].append(
+                {"entity_id": ent_id, "permissions": data_permissions.get("acl")}
+            )
             logger.debug("Processed permissions for %s/%s", ent_type, ent_id)
     logger.info("parsed: %s", output_data)
     return output_data
 
 
 def add_entity_permissions(crd, ent_type, ent_id, perms):
-    data = {
-                   "acl": perms
-                }
+    data = {"acl": perms}
     response = requests.patch(
-        f"{crd.v3url}/entities/{ent_type}/{ent_id}/extendedPermissions", headers=crd.headers, json=data
+        f"{crd.v3url}/entities/{ent_type}/{ent_id}/extendedPermissions",
+        headers=crd.headers,
+        json=data,
     )
     response.raise_for_status()
     elements = response.json()
@@ -92,14 +93,10 @@ def transform_permissions_to_acl(data) -> list:
                 "grant": {
                     "READ": {"users": list(read_user_ids)},
                     "WRITE": {"users": list(write_user_ids)},
-                    "GRANT": {"users": list(grant_user_ids)}
+                    "GRANT": {"users": list(grant_user_ids)},
                 }
             }
-            result.append({
-                "entity_id": ent_id,
-                "entity_type": ent_type,
-                "acl": acl
-            })
+            result.append({"entity_id": ent_id, "entity_type": ent_type, "acl": acl})
     return result
 
 
@@ -112,7 +109,9 @@ def replace_users_in_acl(summarized_perms):
                     continue
                 parts = line.split()
                 if len(parts) != 2:
-                    logger.warning("Line %d doesn't contain exactly 2 values: %s", line_num, line)
+                    logger.warning(
+                        "Line %d doesn't contain exactly 2 values: %s", line_num, line
+                    )
                     continue
                 old_user_id, new_user_id = parts
                 for ent in summarized_perms:
@@ -162,14 +161,24 @@ if __name__ == "__main__":
                 permissions = entity.get("acl")
                 if not creds.dryrun:
                     try:
-                        add_entity_permissions(creds, entity_type, entity_id, permissions)
+                        add_entity_permissions(
+                            creds, entity_type, entity_id, permissions
+                        )
                         success_count += 1
-                        logger.info("Updated %d/%d: %s/%s",
-                                    success_count+error_count,
-                                    len(replaced_users_in_permissions),
-                                    entity_type, entity_id)
+                        logger.info(
+                            "Updated %d/%d: %s/%s",
+                            success_count + error_count,
+                            len(replaced_users_in_permissions),
+                            entity_type,
+                            entity_id,
+                        )
                     except requests.exceptions.HTTPError as e:
-                        logger.error("Error updating permissions: %s/%s: %s", entity_type, entity_id, e)
+                        logger.error(
+                            "Error updating permissions: %s/%s: %s",
+                            entity_type,
+                            entity_id,
+                            e,
+                        )
                         error_count += 1
                 else:
                     success_count += 1
@@ -179,7 +188,9 @@ if __name__ == "__main__":
             if creds.dryrun:
                 logger.info("[DRY RUN] Would update %d entities", success_count)
             else:
-                logger.info("Completed: %d success, %d errors", success_count, error_count)
+                logger.info(
+                    "Completed: %d success, %d errors", success_count, error_count
+                )
 
     except requests.exceptions.HTTPError as err:
         logger.error("HTTP error occurred: %s", err)

@@ -7,6 +7,7 @@ load_dotenv()
 ENTITY_TYPES = ["project", "portfolio", "goal"]
 PERMISSION_ROLES = ["create", "read", "writeNoAssign", "write", "grant"]
 
+
 class Credentials:
     def __init__(self):
         self.baseurl = os.getenv("BASEURL")
@@ -15,8 +16,11 @@ class Credentials:
         self.token = os.getenv("TOKEN")
         self.orgheader = os.getenv("ORGHEADER")
         self.queue = os.getenv("QUEUE")
-        self.headers = {self.orgheader: self.orgid, "Authorization": f"OAuth {self.token}"}
-        self.dryrun = os.getenv("DRY_RUN").lower() in ('true', '1', 'yes', 'on')
+        self.headers = {
+            self.orgheader: self.orgid,
+            "Authorization": f"OAuth {self.token}",
+        }
+        self.dryrun = os.getenv("DRY_RUN").lower() in ("true", "1", "yes", "on")
 
 
 creds = Credentials()

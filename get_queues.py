@@ -12,7 +12,7 @@ def get_all_queues() -> list:
         response = requests.get(
             f"{creds.v3url}/queues",
             headers=creds.headers,
-            params={"page": page, "perPage": per_page}
+            params={"page": page, "perPage": per_page},
         )
         response.raise_for_status()
         data = response.json()
