@@ -1,5 +1,6 @@
 import json
 import requests
+from typing import List, Optional, Dict, Any
 from logger import logger
 from settings import creds
 from changelogins_bulk import get_list_from_file
@@ -14,7 +15,7 @@ class EntityUserManager:
     def __init__(self, credentials):
         self.creds = credentials
     
-    def search_entities(self, filter_field: str, entity_type: str, user_id: str, per_page: int = 100) -> list:
+    def search_entities(self, filter_field: str, entity_type: str, user_id: str, per_page: int = 100) -> List[List[str]]:
         all_ids = []
         current_ids = []
         current_page = 1
@@ -57,7 +58,7 @@ class EntityUserManager:
         logger.info("Ids returned: %s", all_ids)
         return all_ids
 
-    def update_single_field(self, field: str, user_id: str, entity_type: str, entity_ids: list):
+    def update_single_field(self, field: str, user_id: str, entity_type: str, entity_ids: list) -> Optional[Dict[str, Any]]:
         url = f"{self.creds.v3url}/entities/{entity_type}/bulkchange/_update"
         data = json.dumps({
             "metaEntities": entity_ids,
@@ -84,7 +85,7 @@ class EntityUserManager:
             logger.error("Unexpected error updating %s/%s: %s", entity_type, field, e)
         return None
 
-    def update_list_field(self, field: str, old_user_id: str, new_user_id: str, entity_type: str, entity_ids: list):
+    def update_list_field(self, field: str, old_user_id: str, new_user_id: str, entity_type: str, entity_ids: list) -> tuple[Optional[Dict], Optional[Dict]]:
         url = f"{self.creds.v3url}/entities/{entity_type}/bulkchange/_update"
 
         add_data = json.dumps({
@@ -160,8 +161,8 @@ if __name__ == "__main__":
     logger.info("Users to process: %d", len(users_list))
     logger.info("=" * 50)
 
-    for user in users_list:
-        user = user.strip()
+    for user_line in users_list:
+        user = user_line.strip()
         if not user:
             continue
         
@@ -209,7 +210,6 @@ if __name__ == "__main__":
 
                 except Exception as err:
                     logger.error("Unexpected error processing %s/%s: %s", ent_type, fld, err)
-                    error_count += 1
 
     logger.info("=" * 50)
     logger.info("Completed: %d success, %d errors", success_count, error_count)
