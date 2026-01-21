@@ -62,6 +62,10 @@ python change_components_permissions.py --remove-old-user
 python change_components_permissions.py --remove-old-user
 ```
 
+### change_entities_logins_bulk.py
+Скрипт переназначает пользователей в полях проектов, портфелей, очередей. Работает через массовые операции редактирования. Замена происходит по файлу to.txt. При ручном маппинге файл to.txt необходимо подготовить вручную.
+
+
 ### get_queues.py
 Получение списка очередей и сохранение ключей в файл `queues.txt`
 
